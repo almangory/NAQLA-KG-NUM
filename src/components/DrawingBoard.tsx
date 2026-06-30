@@ -31,10 +31,77 @@ export default function DrawingBoard({ onAddStars, lang }: DrawingBoardProps) {
     { hex: '#a855f7', name: 'Purple' },
   ];
 
-  // Initialize and resize canvas
+  // Initialize, resize, and adapt canvas to screen sizes with ResizeObserver
   useEffect(() => {
-    initCanvas();
-  }, [selectedNumber]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleResize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const newWidth = Math.floor(rect.width * 2);
+      const newHeight = Math.floor(rect.height * 2);
+
+      // Save drawing content before resize
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      const hasContent = hasDrawn;
+
+      if (hasContent && tempCtx && canvas.width > 0 && canvas.height > 0) {
+        tempCtx.drawImage(canvas, 0, 0);
+      }
+
+      // Update actual canvas dimensions
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushWidth;
+
+        // Restore saved content
+        if (hasContent && tempCtx && tempCanvas.width > 0 && tempCanvas.height > 0) {
+          ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width / 2, tempCanvas.height / 2);
+        }
+      }
+    };
+
+    // Debounce resize events with requestAnimationFrame for extreme performance
+    let frameId: number;
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        handleResize();
+      });
+    });
+
+    const parentElement = canvas.parentElement || canvas;
+    resizeObserver.observe(parentElement);
+
+    // Initial resize call
+    handleResize();
+
+    return () => {
+      resizeObserver.disconnect();
+      cancelAnimationFrame(frameId);
+    };
+  }, [selectedNumber, hasDrawn]);
+
+  // Handle stroke and brush property updates dynamically
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.strokeStyle = brushColor;
+      ctx.lineWidth = brushWidth;
+    }
+  }, [brushColor, brushWidth]);
 
   // Prevent scroll/gesture events during touch interaction on canvas to freeze screen
   useEffect(() => {
@@ -66,10 +133,10 @@ export default function DrawingBoard({ onAddStars, lang }: DrawingBoardProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set high-DPI support
+    // Reset actual dimensions to current box size
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * 2;
-    canvas.height = rect.height * 2;
+    canvas.width = Math.floor(rect.width * 2);
+    canvas.height = Math.floor(rect.height * 2);
     ctx.scale(2, 2);
 
     // Setup initial brush properties

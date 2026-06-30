@@ -284,11 +284,11 @@ export default function NumbersRaceGame({ lang, onAddStars, onBack }: NumbersRac
       {/* Game Track Area */}
       <div className="bg-linear-to-b from-sky-100/60 to-emerald-50/30 border-2 border-dashed border-sky-200 rounded-3xl p-6 min-h-[220px] flex flex-col justify-between relative overflow-hidden select-none">
         
-        {/* Track Stones */}
-        <div className="relative w-full flex items-center justify-between gap-2 md:gap-4 my-auto py-8">
+        {/* Track Stones with Horizontal Scroll support */}
+        <div className="relative w-full flex items-center justify-between gap-3 md:gap-4 my-auto py-8 overflow-x-auto scrollbar-thin pb-12">
           
           {/* Decorative Finish Flag on the right */}
-          <div className="absolute right-0 -top-2 flex flex-col items-center select-none opacity-90">
+          <div className="absolute right-0 -top-2 flex flex-col items-center select-none opacity-90 z-20">
             <span className="text-3xl animate-bounce-slow">🏁</span>
             <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-md">
               {lang === 'ar' ? 'النهاية' : 'Finish'}
@@ -303,7 +303,7 @@ export default function NumbersRaceGame({ lang, onAddStars, onBack }: NumbersRac
             return (
               <div
                 key={idx}
-                className="flex flex-col items-center flex-1 relative"
+                className="flex flex-col items-center flex-1 shrink-0 min-w-[55px] md:min-w-[75px] relative"
               >
                 {/* Stepping Stone Item */}
                 <div
@@ -342,7 +342,7 @@ export default function NumbersRaceGame({ lang, onAddStars, onBack }: NumbersRac
 
                 {/* Index connector link dots */}
                 {idx < trackSequence.length - 1 && (
-                  <div className="absolute left-[calc(50%+20px)] top-[22px] md:top-[28px] w-[calc(100%-40px)] h-1 bg-stone-300/60 rounded-full hidden sm:block"></div>
+                  <div className="absolute left-[calc(50%+22px)] top-[22px] md:top-[28px] w-[calc(100%-44px)] h-1 bg-stone-300/60 rounded-full hidden sm:block"></div>
                 )}
               </div>
             );

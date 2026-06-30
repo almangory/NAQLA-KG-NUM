@@ -35,7 +35,9 @@ import {
   CheckCircle2,
   Heart,
   Printer,
-  BookOpen
+  BookOpen,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'kg2_numbers_journey_progress';
@@ -72,6 +74,7 @@ const getCountingBoxStyles = (value: number) => {
 export default function App() {
   const [lang, setLang] = useState<Language>('ar');
   const [activeTab, setActiveTab] = useState<ActiveActivity>('explore');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNumber, setSelectedNumber] = useState<NumberItem>(NUMBERS_DATA[1]); // Default to 1
   const [tappedIndices, setTappedIndices] = useState<number[]>([]); // For counting exercises
   const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(false);
@@ -79,6 +82,34 @@ export default function App() {
   // App-level rewards notifications
   const [notification, setNotification] = useState<{ text: string; icon: string } | null>(null);
   const [unlockedBadgeModal, setUnlockedBadgeModal] = useState<any | null>(null);
+
+  // Synchronize fullscreen state with browser events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    playSound('click');
+    try {
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+      }
+    } catch (err) {
+      console.warn('Fullscreen request failed:', err);
+    }
+  };
 
   // User Progress state
   const [progress, setProgress] = useState<UserProgress>({
@@ -412,6 +443,20 @@ export default function App() {
               </span>
             </button>
 
+            {/* Fullscreen toggle button with cute game styles */}
+            <button
+              onClick={toggleFullscreen}
+              className="kids-btn bg-emerald-400 hover:bg-emerald-300 border-emerald-600 text-white px-4 py-2 text-xs flex items-center gap-1.5"
+              title={lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen'}
+            >
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              <span className="font-black">
+                {lang === 'ar' 
+                  ? (isFullscreen ? 'شاشة عادية' : 'ملء الشاشة 📺') 
+                  : (isFullscreen ? 'Normal Screen' : 'Fullscreen 📺')}
+              </span>
+            </button>
+
             {/* Robo mascot interactive assistant */}
             <button
               onClick={handleRobotGreeting}
@@ -465,6 +510,14 @@ export default function App() {
 
           {/* Quick Stats Widget */}
           <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleFullscreen}
+              className="w-8 h-8 rounded-xl bg-emerald-50 border-2 border-emerald-300 flex items-center justify-center text-emerald-600 active:scale-95 transition-transform cursor-pointer"
+              title={lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen'}
+            >
+              {isFullscreen ? <Minimize className="w-4.5 h-4.5" /> : <Maximize className="w-4.5 h-4.5" />}
+            </button>
+
             <div className="flex items-center gap-1 bg-yellow-100 border border-yellow-300 px-2.5 py-1 rounded-full font-black text-xs text-amber-700">
               <span>⭐</span>
               <span>{progress.stars}</span>
