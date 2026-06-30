@@ -1,0 +1,10 @@
+{
+  "name": "NAQLA KG",
+  "description": "An interactive, colorful, and gamified Arabic \u0026 English numbers learning platform for KG2 kids, featuring games, drawing, quizzes, sound integration, and a rewards system.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

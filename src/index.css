@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Fredoka:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Fredoka", "Cairo", system-ui, sans-serif;
+  --font-kids: "Fredoka", "Cairo", system-ui, sans-serif;
+  --font-arabic: "Cairo", system-ui, sans-serif;
+}
+
+/* Custom styles for children learning app */
+body {
+  background: radial-gradient(100% 100% at 50% 0%, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+  min-height: 100vh;
+  font-family: var(--font-kids);
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Custom scrollbars for a cleaner look */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.4);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.6);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Playful child-friendly animations */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 20px 35px -5px rgba(14, 165, 233, 0.5);
+  }
+}
+
+@keyframes float-cloud {
+  0% {
+    transform: translateX(-10%);
+  }
+  50% {
+    transform: translateX(10%);
+  }
+  100% {
+    transform: translateX(-10%);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-float-cloud-slow {
+  animation: float-cloud 30s ease-in-out infinite;
+}
+
+.animate-float-cloud-fast {
+  animation: float-cloud 18s ease-in-out infinite;
+}
+
+/* Bubbly standard card */
+.kids-card {
+  @apply bg-white border-4 border-white rounded-3xl shadow-xl transition-all duration-300;
+}
+
+.kids-btn {
+  @apply relative overflow-hidden font-bold rounded-2xl border-b-4 active:border-b-0 active:translate-y-[4px] shadow-md transition-all duration-100 flex items-center justify-center gap-2;
+}
+
+/* Color thematic buttons with cartoon depth */
+.kids-btn-pink {
+  @apply bg-pink-400 hover:bg-pink-300 border-pink-600 text-white active:bg-pink-400;
+}
+.kids-btn-blue {
+  @apply bg-sky-400 hover:bg-sky-300 border-sky-600 text-white active:bg-sky-400;
+}
+.kids-btn-green {
+  @apply bg-emerald-400 hover:bg-emerald-300 border-emerald-600 text-white active:bg-emerald-400;
+}
+.kids-btn-yellow {
+  @apply bg-amber-400 hover:bg-amber-300 border-amber-600 text-stone-800 active:bg-amber-400;
+}
+.kids-btn-purple {
+  @apply bg-purple-400 hover:bg-purple-300 border-purple-600 text-white active:bg-purple-400;
+}
+.kids-btn-orange {
+  @apply bg-orange-400 hover:bg-orange-300 border-orange-600 text-white active:bg-orange-400;
+}
+
+/* Text outlining for a retro game feel */
+.game-text-stroke {
+  -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.7);
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+}
+
+.game-text-stroke-white {
+  -webkit-text-stroke: 1.5px white;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
