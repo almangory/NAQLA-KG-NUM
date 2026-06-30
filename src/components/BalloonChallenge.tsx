@@ -20,6 +20,7 @@ interface Balloon {
   y: number; // Bottom position (px)
   speed: number; // Pixels per frame
   color: string; // Tailwind color class e.g., 'bg-red-400'
+  duration?: number;
 }
 
 export default function BalloonChallenge({ onAddStars, lang }: BalloonChallengeProps) {

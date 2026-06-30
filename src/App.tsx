@@ -75,6 +75,7 @@ export default function App() {
   const [lang, setLang] = useState<Language>('ar');
   const [activeTab, setActiveTab] = useState<ActiveActivity>('explore');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [selectedNumber, setSelectedNumber] = useState<NumberItem>(NUMBERS_DATA[1]); // Default to 1
   const [tappedIndices, setTappedIndices] = useState<number[]>([]); // For counting exercises
   const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(false);
@@ -82,6 +83,43 @@ export default function App() {
   // App-level rewards notifications
   const [notification, setNotification] = useState<{ text: string; icon: string } | null>(null);
   const [unlockedBadgeModal, setUnlockedBadgeModal] = useState<any | null>(null);
+
+  // Synchronize network connection status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      try {
+        playSound('correct');
+      } catch (err) {}
+      setNotification({
+        text: lang === 'ar' ? 'تمت استعادة الاتصال بالإنترنت! 🎉' : 'Back online! 🎉',
+        icon: '📶',
+      });
+      setTimeout(() => setNotification(null), 4000);
+    };
+
+    const handleOffline = () => {
+      setIsOffline(true);
+      try {
+        playSound('wrong');
+      } catch (err) {}
+      setNotification({
+        text: lang === 'ar' 
+          ? 'تعمل الآن بدون إنترنت بنجاح! الألعاب مستمرة 🎮' 
+          : 'You are now offline! Games are still ready 🎮',
+        icon: '⚠️',
+      });
+      setTimeout(() => setNotification(null), 5000);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [lang]);
 
   // Synchronize fullscreen state with browser events
   useEffect(() => {
@@ -382,6 +420,18 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col pb-20 md:pb-6 relative text-stone-800">
       
+      {/* Playful Offline Alert Banner */}
+      {isOffline && (
+        <div className="w-full bg-linear-to-r from-amber-400 via-orange-400 to-amber-400 text-stone-900 font-bold text-center py-2.5 px-4 shadow-md text-xs md:text-sm flex items-center justify-center gap-2 z-50 border-b-4 border-orange-500 animate-pulse-soft">
+          <span className="text-lg">🎮</span>
+          <span>
+            {lang === 'ar' 
+              ? 'أنت تعمل الآن بدون اتصال بالإنترنت! جميع ألعاب NAQLA KG تعمل بكفاءة وبشكل كامل 🎉' 
+              : 'Playing Offline! All NAQLA KG games and activities are fully ready for you 🎉'}
+          </span>
+        </div>
+      )}
+
       {/* Puffy clouds backdrop decorative frames */}
       <div className="absolute top-24 -left-16 text-white text-9xl select-none pointer-events-none opacity-20 animate-float-cloud-slow">☁️</div>
       <div className="absolute top-80 -right-24 text-white text-[120px] select-none pointer-events-none opacity-25 animate-float-cloud-fast">☁️</div>
