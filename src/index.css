@@ -126,3 +126,31 @@ body {
   text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
 }
 
+/* ⚡ Super Lite Mode Optimizations for Low-end / Weak Devices ⚡ */
+body.lite-mode {
+  background: #bae6fd !important; /* Flat sky blue color - instantly painted without GPU radial gradients */
+}
+
+/* Strip expensive filters, gradients, shadows and transitions to maximize FPS on weak CPUs/GPUs */
+.lite-mode :not(.balloon-float-animation):not(.balloon-float-animation *) {
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Simplify kids card borders & shapes in lite mode instead of heavy shadows */
+.lite-mode .kids-card {
+  box-shadow: none !important;
+  border-width: 4px !important;
+  border-style: solid !important;
+  border-color: #f1f5f9 !important;
+}
+
+.lite-mode .kids-btn {
+  box-shadow: none !important;
+}
+
+

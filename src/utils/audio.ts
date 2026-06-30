@@ -8,6 +8,9 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 }
 
 export function speakText(text: string, lang: 'ar' | 'en') {
+  if (typeof window !== 'undefined' && localStorage.getItem('kg_muted') === 'true') {
+    return;
+  }
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   window.speechSynthesis.cancel(); // Stop any currently playing audio
@@ -95,6 +98,9 @@ function getAudioContext(): AudioContext | null {
 }
 
 export function playSound(type: string) {
+  if (typeof window !== 'undefined' && localStorage.getItem('kg_muted') === 'true') {
+    return;
+  }
   try {
     const ctx = getAudioContext();
     if (!ctx) {

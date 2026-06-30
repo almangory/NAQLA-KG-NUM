@@ -11,6 +11,7 @@ import StatsProgress from './components/StatsProgress';
 import WorksheetGenerator from './components/WorksheetGenerator';
 import MoreGames from './components/MoreGames';
 import VoiceRecorder from './components/VoiceRecorder';
+import MyRecordings from './components/MyRecordings';
 import confetti from 'canvas-confetti';
 import { 
   Compass, 
@@ -19,6 +20,7 @@ import {
   Shuffle, 
   Sparkles, 
   Volume2, 
+  VolumeX,
   Star, 
   Trophy, 
   Flame, 
@@ -37,7 +39,9 @@ import {
   Printer,
   BookOpen,
   Maximize,
-  Minimize
+  Minimize,
+  Zap,
+  Mic
 } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'kg2_numbers_journey_progress';
@@ -76,10 +80,33 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveActivity>('explore');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('kg_muted') === 'true';
+    }
+    return false;
+  });
+  const [isLiteMode, setIsLiteMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('kg_lite_mode') === 'true';
+    }
+    return false;
+  });
   const [selectedNumber, setSelectedNumber] = useState<NumberItem>(NUMBERS_DATA[1]); // Default to 1
   const [tappedIndices, setTappedIndices] = useState<number[]>([]); // For counting exercises
   const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(false);
   
+  // Sync body class for Lite/Performance mode
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (isLiteMode) {
+        document.body.classList.add('lite-mode');
+      } else {
+        document.body.classList.remove('lite-mode');
+      }
+    }
+  }, [isLiteMode]);
+
   // App-level rewards notifications
   const [notification, setNotification] = useState<{ text: string; icon: string } | null>(null);
   const [unlockedBadgeModal, setUnlockedBadgeModal] = useState<any | null>(null);
@@ -120,6 +147,35 @@ export default function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, [lang]);
+
+  // Dynamically optimize confetti particles for low-end devices
+  useEffect(() => {
+    const win = window as any;
+    if (win) {
+      const patchConfetti = () => {
+        if (win.confetti && !win.confetti.__patched) {
+          const original = win.confetti;
+          const patched = function(options?: any) {
+            const isLite = localStorage.getItem('kg_lite_mode') === 'true';
+            if (isLite) {
+              if (!options) options = {};
+              options.particleCount = Math.min(options.particleCount || 50, 6);
+              options.ticks = Math.min(options.ticks || 200, 35);
+              options.spread = Math.min(options.spread || 70, 20);
+            }
+            return original(options);
+          };
+          patched.__patched = true;
+          Object.assign(patched, original);
+          win.confetti = patched;
+        }
+      };
+      
+      patchConfetti();
+      const t = setTimeout(patchConfetti, 500);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   // Synchronize fullscreen state with browser events
   useEffect(() => {
@@ -433,8 +489,12 @@ export default function App() {
       )}
 
       {/* Puffy clouds backdrop decorative frames */}
-      <div className="absolute top-24 -left-16 text-white text-9xl select-none pointer-events-none opacity-20 animate-float-cloud-slow">☁️</div>
-      <div className="absolute top-80 -right-24 text-white text-[120px] select-none pointer-events-none opacity-25 animate-float-cloud-fast">☁️</div>
+      {!isLiteMode && (
+        <>
+          <div className="absolute top-24 -left-16 text-white text-9xl select-none pointer-events-none opacity-20 animate-float-cloud-slow">☁️</div>
+          <div className="absolute top-80 -right-24 text-white text-[120px] select-none pointer-events-none opacity-25 animate-float-cloud-fast">☁️</div>
+        </>
+      )}
 
       {/* Floating Sparkles notifications toast */}
       {notification && (
@@ -493,6 +553,82 @@ export default function App() {
               </span>
             </button>
 
+            {/* Global Quick Mute toggle button */}
+            <button
+              onClick={() => {
+                const nextMute = !isMuted;
+                setIsMuted(nextMute);
+                localStorage.setItem('kg_muted', String(nextMute));
+                
+                if (nextMute) {
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                  }
+                  setNotification({
+                    text: lang === 'ar' ? 'تم كتم جميع الأصوات والمؤثرات 🔇' : 'All sounds and voices muted 🔇',
+                    icon: '🔇',
+                  });
+                } else {
+                  setNotification({
+                    text: lang === 'ar' ? 'تم تفعيل الصوت بنجاح! 🔊' : 'Audio successfully enabled! 🔊',
+                    icon: '🔊',
+                  });
+                  // Play a cheerful chime to confirm audio is active
+                  setTimeout(() => {
+                    playSound('success');
+                    speakText(lang === 'ar' ? 'تم تفعيل الصوت' : 'Audio enabled', lang);
+                  }, 50);
+                }
+                setTimeout(() => setNotification(null), 3000);
+              }}
+              className={`kids-btn px-4 py-2 text-xs flex items-center gap-1.5 transition-colors ${
+                isMuted 
+                  ? 'bg-rose-500 hover:bg-rose-400 border-rose-700 text-white' 
+                  : 'bg-emerald-400 hover:bg-emerald-300 border-emerald-600 text-white'
+              }`}
+              title={lang === 'ar' ? 'كتم/تشغيل الصوت بالكامل' : 'Mute/Unmute all sounds'}
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              <span className="font-black">
+                {lang === 'ar' 
+                  ? (isMuted ? 'تشغيل الصوت 🔊' : 'كتم الصوت 🔇') 
+                  : (isMuted ? 'Unmute 🔊' : 'Mute 🔇')}
+              </span>
+            </button>
+
+            {/* Lite Mode toggle for low-end / weak devices */}
+            <button
+              onClick={() => {
+                const nextLite = !isLiteMode;
+                setIsLiteMode(nextLite);
+                localStorage.setItem('kg_lite_mode', String(nextLite));
+                playSound('click');
+                const message = nextLite
+                  ? (lang === 'ar' ? 'تم تفعيل وضع الأجهزة الضعيفة لتسريع الألعاب!' : 'Lite mode activated to speed up games!')
+                  : (lang === 'ar' ? 'تم العودة للوضع العالي الدقة!' : 'Returned to high quality mode!');
+                
+                setNotification({
+                  text: message,
+                  icon: '⚡',
+                });
+                setTimeout(() => setNotification(null), 4000);
+                speakText(message, lang);
+              }}
+              className={`kids-btn px-4 py-2 text-xs flex items-center gap-1.5 transition-colors ${
+                isLiteMode 
+                  ? 'bg-rose-500 hover:bg-rose-400 border-rose-700 text-white animate-pulse-soft' 
+                  : 'bg-indigo-400 hover:bg-indigo-300 border-indigo-600 text-white'
+              }`}
+              title={lang === 'ar' ? 'وضع الأجهزة الضعيفة (لتسريع اللعب)' : 'Lite Mode (for low-end devices)'}
+            >
+              <Zap className="w-4 h-4" />
+              <span className="font-black">
+                {lang === 'ar' 
+                  ? (isLiteMode ? 'الأداء الفائق 🚀' : 'أجهزة ضعيفة ⚡') 
+                  : (isLiteMode ? 'Turbo Mode 🚀' : 'Lite Mode ⚡')}
+              </span>
+            </button>
+
             {/* Fullscreen toggle button with cute game styles */}
             <button
               onClick={toggleFullscreen}
@@ -546,6 +682,7 @@ export default function App() {
               {activeTab === 'songs' && '🎵'}
               {activeTab === 'worksheets' && '🖨️'}
               {activeTab === 'moregames' && '🎮'}
+              {activeTab === 'recordings' && '🎙️'}
             </span>
             <span className="text-indigo-600">
               {activeTab === 'quiz' && (lang === 'ar' ? 'اختبار المعرفة' : 'Quiz Time')}
@@ -555,6 +692,7 @@ export default function App() {
               {activeTab === 'songs' && (lang === 'ar' ? 'أناشيد الأطفال' : 'Nursery Songs')}
               {activeTab === 'worksheets' && (lang === 'ar' ? 'منشئ أوراق العمل' : 'Worksheet Generator')}
               {activeTab === 'moregames' && (lang === 'ar' ? 'ألعاب إضافية ممتعة' : 'Extra Fun Games')}
+              {activeTab === 'recordings' && (lang === 'ar' ? 'تسجيلاتي البطلة' : 'My Recordings')}
             </span>
           </div>
 
@@ -665,6 +803,16 @@ export default function App() {
             >
               <Music className="w-4 h-4" />
               <span>{lang === 'ar' ? 'أناشيد الأطفال 🎵' : 'Nursery Songs 🎵'}</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('recordings')}
+              className={`kids-btn px-4 py-2.5 text-xs md:text-sm shrink-0 ${
+                activeTab === 'recordings' ? 'kids-btn-pink ring-4 ring-pink-100' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+              }`}
+            >
+              <Mic className="w-4 h-4" />
+              <span>{lang === 'ar' ? 'تسجيلاتي 🎙️' : 'My Recordings 🎙️'}</span>
             </button>
 
             <button
@@ -1026,6 +1174,11 @@ export default function App() {
           />
         )}
 
+        {/* TAB 9: My Recordings (recordings) */}
+        {activeTab === 'recordings' && (
+          <MyRecordings lang={lang} onAddStars={addStars} />
+        )}
+
       </main>
 
       {/* Profile & Rewards Section anchor point */}
@@ -1158,6 +1311,16 @@ export default function App() {
           >
             <Music className="w-5 h-5" />
             <span className="text-[9px]">{lang === 'ar' ? 'الأناشيد' : 'Songs'}</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('recordings')}
+            className={`flex flex-col items-center gap-0.5 text-center shrink-0 min-w-[50px] ${
+              activeTab === 'recordings' ? 'text-pink-500 font-black scale-105' : 'text-stone-400 font-bold hover:text-stone-600'
+            } transition-transform`}
+          >
+            <Mic className="w-5 h-5" />
+            <span className="text-[9px]">{lang === 'ar' ? 'تسجيلاتي' : 'Voices'}</span>
           </button>
 
           <button

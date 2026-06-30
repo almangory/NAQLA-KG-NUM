@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Mic, Square, Play, Pause, Trash2, Sparkles, AlertCircle } from 'lucide-react';
 import { playSound } from '../utils/audio';
+import { getRecordingDb, saveRecordingDb, deleteRecordingDb, playRecordingWebAudio } from '../utils/recordingsDb';
 
 interface VoiceRecorderProps {
   numberValue: number;
@@ -9,13 +10,13 @@ interface VoiceRecorderProps {
   onAddStars: (amount: number, reason: string) => void;
 }
 
-// Keep an in-memory session cache of recordings so kids don't lose them when switching numbers
-const recordingsCache: Record<number, string> = {};
+// Keep a rewarded cache in memory for stars
 const rewardedNumbersCache: Record<number, boolean> = {};
 
 export default function VoiceRecorder({ numberValue, numberWord, lang, onAddStars }: VoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'recorded'>('idle');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -24,24 +25,36 @@ export default function VoiceRecorder({ numberValue, numberWord, lang, onAddStar
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
-  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
+  const webAudioStopRef = useRef<(() => void) | null>(null);
 
   // Load cached recording for this number if it exists
   useEffect(() => {
     // Stop any current playback
-    if (audioPlaybackRef.current) {
-      audioPlaybackRef.current.pause();
-      setIsPlaying(false);
+    if (webAudioStopRef.current) {
+      webAudioStopRef.current();
+      webAudioStopRef.current = null;
     }
+    setIsPlaying(false);
     
-    const cached = recordingsCache[numberValue];
-    if (cached) {
-      setAudioUrl(cached);
-      setRecordingState('recorded');
-    } else {
+    // Fetch from IndexedDB
+    getRecordingDb(numberValue).then((saved) => {
+      if (saved) {
+        const url = URL.createObjectURL(saved.blob);
+        setAudioUrl(url);
+        setAudioBlob(saved.blob);
+        setRecordingState('recorded');
+      } else {
+        setAudioUrl(null);
+        setAudioBlob(null);
+        setRecordingState('idle');
+      }
+    }).catch(err => {
+      console.error('Failed to load recording from IndexedDB', err);
       setAudioUrl(null);
+      setAudioBlob(null);
       setRecordingState('idle');
-    }
+    });
+
     setErrorMsg(null);
     setRecordingDuration(0);
   }, [numberValue]);
@@ -55,8 +68,8 @@ export default function VoiceRecorder({ numberValue, numberWord, lang, onAddStar
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
-      if (audioPlaybackRef.current) {
-        audioPlaybackRef.current.pause();
+      if (webAudioStopRef.current) {
+        webAudioStopRef.current();
       }
     };
   }, []);
@@ -81,11 +94,20 @@ export default function VoiceRecorder({ numberValue, numberWord, lang, onAddStar
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(audioBlob);
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-        recordingsCache[numberValue] = url;
+        setAudioBlob(blob);
         setRecordingState('recorded');
+        
+        // Save to IndexedDB
+        const durationToSave = recordingDuration || 3;
+        saveRecordingDb(numberValue, numberWord, blob, durationToSave)
+          .then(() => {
+            // Notify other parts of the app to refresh recordings lists
+            window.dispatchEvent(new CustomEvent('kg-recordings-updated'));
+          })
+          .catch(err => console.error('Error saving recording:', err));
         
         // Award stars for speaking if they haven't been rewarded yet for this number
         if (!rewardedNumbersCache[numberValue]) {
@@ -152,44 +174,50 @@ export default function VoiceRecorder({ numberValue, numberWord, lang, onAddStar
     playSound('click');
   };
 
-  const playRecordedAudio = () => {
-    if (!audioUrl) return;
+  const playRecordedAudio = async () => {
+    if (!audioBlob) return;
 
-    if (isPlaying && audioPlaybackRef.current) {
-      audioPlaybackRef.current.pause();
+    if (isPlaying) {
+      if (webAudioStopRef.current) {
+        webAudioStopRef.current();
+        webAudioStopRef.current = null;
+      }
       setIsPlaying(false);
       return;
     }
 
     playSound('click');
-    const audio = new Audio(audioUrl);
-    audioPlaybackRef.current = audio;
-    setIsPlaying(true);
+    const isMuted = localStorage.getItem('kg_muted') === 'true';
+    
+    const control = await playRecordingWebAudio(
+      audioBlob,
+      () => setIsPlaying(true),
+      () => setIsPlaying(false),
+      () => setIsPlaying(false),
+      isMuted
+    );
 
-    audio.onended = () => {
-      setIsPlaying(false);
-    };
-
-    audio.onerror = () => {
-      setIsPlaying(false);
-      setErrorMsg(
-        lang === 'ar' 
-          ? 'تعذر تشغيل التسجيل، يرجى إعادة التسجيل.' 
-          : 'Failed to play recording, please record again.'
-      );
-    };
-
-    audio.play();
+    if (control) {
+      webAudioStopRef.current = control.stop;
+    }
   };
 
   const deleteRecording = () => {
     playSound('wrong');
-    if (audioPlaybackRef.current) {
-      audioPlaybackRef.current.pause();
+    if (webAudioStopRef.current) {
+      webAudioStopRef.current();
+      webAudioStopRef.current = null;
     }
     setIsPlaying(false);
     setAudioUrl(null);
-    delete recordingsCache[numberValue];
+    setAudioBlob(null);
+    
+    deleteRecordingDb(numberValue)
+      .then(() => {
+        window.dispatchEvent(new CustomEvent('kg-recordings-updated'));
+      })
+      .catch(err => console.error('Error deleting recording:', err));
+      
     setRecordingState('idle');
     setRecordingDuration(0);
   };

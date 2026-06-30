@@ -38,4 +38,4 @@ export interface UserProgress {
   lastPlayedDate: string; // YYYY-MM-DD
 }
 
-export type ActiveActivity = 'explore' | 'quiz' | 'songs' | 'match' | 'challenge' | 'creativity' | 'worksheets' | 'moregames';
+export type ActiveActivity = 'explore' | 'quiz' | 'songs' | 'match' | 'challenge' | 'creativity' | 'worksheets' | 'moregames' | 'recordings';
