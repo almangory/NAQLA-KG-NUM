@@ -31,6 +31,16 @@ export default function DrawingBoard({ onAddStars, lang }: DrawingBoardProps) {
     { hex: '#a855f7', name: 'Purple' },
   ];
 
+  const brushColorRef = useRef(brushColor);
+  const brushWidthRef = useRef(brushWidth);
+  const hasDrawnRef = useRef(hasDrawn);
+
+  useEffect(() => {
+    brushColorRef.current = brushColor;
+    brushWidthRef.current = brushWidth;
+    hasDrawnRef.current = hasDrawn;
+  }, [brushColor, brushWidth, hasDrawn]);
+
   // Initialize, resize, and adapt canvas to screen sizes with ResizeObserver
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -46,7 +56,7 @@ export default function DrawingBoard({ onAddStars, lang }: DrawingBoardProps) {
       tempCanvas.width = canvas.width;
       tempCanvas.height = canvas.height;
       const tempCtx = tempCanvas.getContext('2d');
-      const hasContent = hasDrawn;
+      const hasContent = hasDrawnRef.current;
 
       if (hasContent && tempCtx && canvas.width > 0 && canvas.height > 0) {
         tempCtx.drawImage(canvas, 0, 0);
@@ -61,8 +71,8 @@ export default function DrawingBoard({ onAddStars, lang }: DrawingBoardProps) {
         ctx.scale(2, 2);
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.strokeStyle = brushColor;
-        ctx.lineWidth = brushWidth;
+        ctx.strokeStyle = brushColorRef.current;
+        ctx.lineWidth = brushWidthRef.current;
 
         // Restore saved content
         if (hasContent && tempCtx && tempCanvas.width > 0 && tempCanvas.height > 0) {
@@ -90,7 +100,7 @@ export default function DrawingBoard({ onAddStars, lang }: DrawingBoardProps) {
       resizeObserver.disconnect();
       cancelAnimationFrame(frameId);
     };
-  }, [selectedNumber, hasDrawn]);
+  }, [selectedNumber]);
 
   // Handle stroke and brush property updates dynamically
   useEffect(() => {

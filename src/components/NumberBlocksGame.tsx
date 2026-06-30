@@ -377,7 +377,7 @@ export default function NumberBlocksGame({ lang, onAddStars, onBack }: NumberBlo
                     block.color
                   } ${block.borderColor} ${
                     isCurrentDrag 
-                      ? 'fixed z-50 opacity-90 scale-115 pointer-events-none' 
+                      ? 'absolute z-50 opacity-90 scale-115 pointer-events-none' 
                       : 'hover:scale-105 active:scale-95'
                   }`}
                   style={

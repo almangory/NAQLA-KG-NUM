@@ -206,7 +206,7 @@ export default function MatchingGame({ onAddStars, lang }: MatchingGameProps) {
                       key={card.id}
                       onClick={() => handleCardClick(card)}
                       disabled={isMatched || (selectedLeft !== null && card.type === 'left' && !isSelected)}
-                      className={`kids-btn py-5 border-4 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all h-[110px] ${borderStyle} ${bgStyle}`}
+                      className={`kids-btn py-4 px-2 border-4 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all min-h-[110px] ${borderStyle} ${bgStyle}`}
                     >
                       <span className={`text-4xl md:text-5xl font-black ${textStyle}`}>
                         {card.content}
@@ -250,7 +250,7 @@ export default function MatchingGame({ onAddStars, lang }: MatchingGameProps) {
                       key={card.id}
                       onClick={() => handleCardClick(card)}
                       disabled={isMatched || (selectedRight !== null && card.type === 'right' && !isSelected)}
-                      className={`kids-btn py-4 px-2 border-4 rounded-2xl flex flex-col items-center justify-center transition-all h-[110px] ${borderStyle} ${bgStyle}`}
+                      className={`kids-btn py-4 px-2 border-4 rounded-2xl flex flex-col items-center justify-center transition-all min-h-[110px] ${borderStyle} ${bgStyle}`}
                     >
                       {/* Flex emojis spacing */}
                       <div className={`flex flex-wrap items-center justify-center ${card.value >= 7 ? 'gap-0.5' : 'gap-1'} max-w-[200px] leading-tight`}>

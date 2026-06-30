@@ -620,10 +620,10 @@ export default function MoreGames({ lang, onAddStars }: MoreGamesProps) {
           {/* Action buttons select Comparison */}
           <div className="flex flex-col items-center justify-center gap-4">
             
-            <div className="flex justify-center gap-4 w-full max-w-md">
+            <div className="flex justify-center gap-2.5 w-full max-w-md px-1">
               <button
                 onClick={() => checkComparison('>')}
-                className={`flex-1 kids-btn text-2xl md:text-3xl py-3.5 font-black ${
+                className={`flex-1 kids-btn py-3 font-black ${
                   selectedComparison === '>'
                     ? (comparisonSuccess 
                         ? 'bg-emerald-500 text-white border-emerald-700' 
@@ -631,12 +631,12 @@ export default function MoreGames({ lang, onAddStars }: MoreGamesProps) {
                     : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50'
                 }`}
               >
-                <span>{lang === 'ar' ? 'أكبر من >' : 'Greater >'}</span>
+                <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-black leading-none">{lang === 'ar' ? 'أكبر >' : 'Greater >'}</span>
               </button>
 
               <button
                 onClick={() => checkComparison('=')}
-                className={`flex-1 kids-btn text-2xl md:text-3xl py-3.5 font-black ${
+                className={`flex-1 kids-btn py-3 font-black ${
                   selectedComparison === '='
                     ? (comparisonSuccess 
                         ? 'bg-emerald-500 text-white border-emerald-700' 
@@ -644,12 +644,12 @@ export default function MoreGames({ lang, onAddStars }: MoreGamesProps) {
                     : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50'
                 }`}
               >
-                <span>{lang === 'ar' ? 'يساوي =' : 'Equal ='}</span>
+                <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-black leading-none">{lang === 'ar' ? 'يساوي =' : 'Equal ='}</span>
               </button>
 
               <button
                 onClick={() => checkComparison('<')}
-                className={`flex-1 kids-btn text-2xl md:text-3xl py-3.5 font-black ${
+                className={`flex-1 kids-btn py-3 font-black ${
                   selectedComparison === '<'
                     ? (comparisonSuccess 
                         ? 'bg-emerald-500 text-white border-emerald-700' 
@@ -657,7 +657,7 @@ export default function MoreGames({ lang, onAddStars }: MoreGamesProps) {
                     : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50'
                 }`}
               >
-                <span>{lang === 'ar' ? 'أصغر من <' : 'Less <'}</span>
+                <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-black leading-none">{lang === 'ar' ? 'أصغر <' : 'Less <'}</span>
               </button>
             </div>
 

@@ -113,49 +113,30 @@ export default function BalloonChallenge({ onAddStars, lang }: BalloonChallengeP
     speakText(speakOverText, lang);
   };
 
-  // Spawn and float balloons loop
+  // Spawn and float balloons loop optimized with CSS animations
   useEffect(() => {
     if (!isPlaying || gameOver) {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
       return;
     }
 
-    let lastSpawn = 0;
-    const spawnRate = 1200; // spawn a balloon every 1.2s
+    // Pre-spawn two balloons at start
+    spawnBalloon();
+    spawnBalloon();
 
-    const updateGame = (timestamp: number) => {
-      // Spawn new balloon
-      if (timestamp - lastSpawn > spawnRate) {
-        lastSpawn = timestamp;
-        spawnBalloon();
-      }
-
-      // Move balloons upward
-      setBalloons((prevBalloons) => {
-        return prevBalloons
-          .map((b) => ({
-            ...b,
-            y: b.y + b.speed,
-          }))
-          // filter out balloons that floated away
-          .filter((b) => b.y < 500);
-      });
-
-      requestRef.current = requestAnimationFrame(updateGame);
-    };
-
-    requestRef.current = requestAnimationFrame(updateGame);
+    const spawnInterval = setInterval(() => {
+      spawnBalloon();
+    }, 1100);
 
     return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      clearInterval(spawnInterval);
     };
   }, [isPlaying, gameOver]);
 
   const spawnBalloon = () => {
     const randomNumItem = NUMBERS_DATA[Math.floor(Math.random() * 11)];
     const id = balloonIdRef.current++;
-    const x = Math.floor(Math.random() * 80) + 5; // Left position 5% to 85%
-    const speed = Math.random() * 1.5 + 1.2; // Move up by 1.2 to 2.7px per frame
+    const x = Math.floor(Math.random() * 78) + 6; // Left position 6% to 84%
+    const duration = Math.random() * 2.8 + 3.5; // Float duration from 3.5s to 6.3s
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     const newBalloon: Balloon = {
@@ -165,12 +146,17 @@ export default function BalloonChallenge({ onAddStars, lang }: BalloonChallengeP
       word: lang === 'ar' ? randomNumItem.arabicWord : randomNumItem.englishWord,
       emoji: randomNumItem.illustrationEmoji,
       x,
-      y: -80, // Start just below bottom of container
-      speed,
+      y: -80, // Legacy
+      speed: 0, // Legacy
       color,
+      duration,
     };
 
     setBalloons((prev) => [...prev, newBalloon]);
+  };
+
+  const handleAnimationEnd = (id: number) => {
+    setBalloons((prev) => prev.filter((b) => b.id !== id));
   };
 
   const handlePop = (balloon: Balloon) => {
@@ -190,7 +176,7 @@ export default function BalloonChallenge({ onAddStars, lang }: BalloonChallengeP
       confetti({
         particleCount: 15,
         spread: 30,
-        origin: { x: balloon.x / 100, y: 1 - (balloon.y / 400) },
+        origin: { x: balloon.x / 100, y: 0.5 },
       });
 
       // Select new target
@@ -207,6 +193,21 @@ export default function BalloonChallenge({ onAddStars, lang }: BalloonChallengeP
 
   return (
     <div className="p-4 md:p-6 animate-fade-in" id="balloon-challenge-section">
+      {/* Self-contained high performance animation style */}
+      <style>{`
+        @keyframes balloonFloatUp {
+          0% {
+            transform: translateY(100%);
+          }
+          100% {
+            transform: translateY(-520px);
+          }
+        }
+        .balloon-float-animation {
+          animation: balloonFloatUp var(--float-duration, 5s) linear forwards;
+        }
+      `}</style>
+
       <div className="max-w-2xl mx-auto">
         
         {/* Title */}
@@ -292,11 +293,13 @@ export default function BalloonChallenge({ onAddStars, lang }: BalloonChallengeP
                 <button
                   key={balloon.id}
                   onClick={() => handlePop(balloon)}
-                  className={`absolute rounded-full flex flex-col items-center justify-center select-none shadow-md cursor-pointer transition-transform hover:scale-105 active:scale-90 border-2 w-16 h-20 ${balloon.color}`}
+                  onAnimationEnd={() => handleAnimationEnd(balloon.id)}
+                  className={`absolute rounded-full flex flex-col items-center justify-center select-none shadow-md cursor-pointer transition-transform hover:scale-105 active:scale-90 border-2 w-16 h-20 balloon-float-animation ${balloon.color}`}
                   style={{
                     left: `${balloon.x}%`,
-                    bottom: `${balloon.y}px`,
-                  }}
+                    bottom: `-100px`,
+                    '--float-duration': `${balloon.duration}s`,
+                  } as React.CSSProperties}
                 >
                   <span className="text-2xl font-black font-sans text-white text-shadow-sm leading-none drop-shadow">
                     {balloon.digit}
